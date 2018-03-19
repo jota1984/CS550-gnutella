@@ -56,6 +56,10 @@ public class Peer implements FileServer, PeerNode {
 	private ArrayList<FileLocation> fileLocations;
 
 	
+	public ArrayList<FileLocation> getFileLocations() {
+		return fileLocations;
+	}
+
 	private static Options options;
 	
 	/**
@@ -188,6 +192,7 @@ public class Peer implements FileServer, PeerNode {
 			neighbor.query(msgId, Const.TTL, name, localAddress, localPort);
 		}
 	}
+	
 	
 	public boolean sayHello(InetSocketAddress addr) throws RemoteException, NotBoundException {
 		String address = addr.getHostString();
@@ -363,13 +368,9 @@ public class Peer implements FileServer, PeerNode {
 		} else { 
 			PeerNode upstream = seenMessages.get(msgId);
 			if(upstream == this) { //If query was initiated by this peer
-				System.out.println("File found");
+				System.out.println("File found, Type \"results\" to view result");
 				if( !fileLocations.contains(fileLocation) )
 					fileLocations.add(fileLocation);
-				for( int i = 0;  i < fileLocations.size(); i++) {
-					FileLocation loc = fileLocations.get(i);
-					System.out.println("" + i + "->" +  loc);
-				}
 				return;
 			} else {
 				System.out.println("Forwarding hitquery upstream");

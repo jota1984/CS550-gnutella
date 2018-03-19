@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.Scanner;
 
 /**
@@ -74,6 +75,13 @@ public class PeerConsole extends Thread {
 					} catch( RemoteException e) {
 						System.out.println("Exception communicating with IndexServer");
 					} 
+					break;
+				case "results":
+					ArrayList<FileLocation> results = peer.getFileLocations();
+					System.out.println("Type \"download <i>\" to download a file from the following list");
+					for( int i = 0; i < results.size(); i++) {
+						System.out.println("" + i + "->"  + results.get(i))
+;					}
 					break;
 				case "download": 
 					if (location != null && fileName != null ) {
