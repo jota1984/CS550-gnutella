@@ -7,6 +7,7 @@ import java.net.InetSocketAddress;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.NoSuchElementException;
 import java.util.Scanner;
 
 /**
@@ -45,6 +46,8 @@ public class PeerConsole extends Thread {
         FileLocation location = null;
         //Used to store fileName of file searched using the search command
         String fileName = null;
+        //Used to store search results
+        ArrayList<FileLocation> results;
         try {
 			while ( (line = cin.readLine()) != null) {
 
@@ -77,23 +80,25 @@ public class PeerConsole extends Thread {
 					} 
 					break;
 				case "results":
-					ArrayList<FileLocation> results = peer.getFileLocations();
+					results = peer.getFileLocations();
 					System.out.println("Type \"download <i>\" to download a file from the following list");
 					for( int i = 0; i < results.size(); i++) {
 						System.out.println("" + i + "->"  + results.get(i))
 ;					}
 					break;
 				case "download": 
-					if (location != null && fileName != null ) {
+					try { 
+						int i = s.nextInt();
+						results = peer.getFileLocations();
+						FileLocation loc = results.get(i);
+						System.out.println("Attempting to download " + loc);
 						try {
-							System.out.println("Attempting to download " + fileName +
-									" from " + location);
-							peer.download(fileName,location,false);
-						} catch (NotBoundException|IOException e) {
+							peer.download(loc.getName(), loc, false);
+						} catch (NotBoundException e) {
 							System.out.println("Download failed." + e.getMessage());
-						} 
-					} else {
-						System.out.println("Must search a file first");
+						}
+					} catch( NoSuchElementException e) { 
+						System.out.println("Must specify index");
 					}
 					break;
 				case "export": 
