@@ -158,17 +158,11 @@ public class Peer implements FileServer, PeerNode {
                 .desc(  "print this help" )
                 .longOpt("help")
                 .build();	
-		Option interactive   = Option.builder("i")
-                .desc(  "Run in interactive mode. DirWatcherThread is not run and user must handle "
-                		+ "connection and registration manually")
-                .longOpt("interactive")
-                .build();
-		
+
 		options.addOption(localAddress);
 		options.addOption(localPort);
 		options.addOption(directory);
 		options.addOption(help);
-		options.addOption(interactive);
 	}
 	
 	/**
