@@ -120,6 +120,22 @@ public class Peer implements FileServer, PeerNode {
 				System.out.println("Error exporting FileServer interface");
 				System.exit(0);
 			}
+			
+			if( cmd.hasOption("N") ) {
+				String neighbor_seed = cmd.getOptionValue("N");
+				for(String n : neighbor_seed.split(",") ) {
+					String[] ninfo = n.split(":");
+					String host = ninfo[0];
+					int port = Integer.parseInt(ninfo[1]);
+					try {
+						peer.sayHello(new InetSocketAddress(host, port));
+					} catch (RemoteException | NotBoundException e) {
+						System.out.println("Failed to contact neighbor " + n);
+					}
+				}
+			}
+			
+			
 			//System.out.println("Starting DirWatcherThread");
 			//new DirWatcherThread(peer).start();
 
@@ -153,12 +169,19 @@ public class Peer implements FileServer, PeerNode {
                 .hasArg()
                 .desc(  "use provided directory to read shared files and store downloaded files" )
                 .longOpt("dir")
-                .build();	
+                .build();
+		Option neighbors   = Option.builder("N")
+				.argName( "neighbor-list" )
+                .hasArg()
+                .desc(  "provide a list of neighbors in format <ip1>:<port1>,<ip2>:<port2>..." )
+                .longOpt("neighbors")
+                .build();
 		Option help   = Option.builder("h")
                 .desc(  "print this help" )
                 .longOpt("help")
                 .build();	
 
+		options.addOption(neighbors);
 		options.addOption(localAddress);
 		options.addOption(localPort);
 		options.addOption(directory);
@@ -179,7 +202,6 @@ public class Peer implements FileServer, PeerNode {
 			neighbor.query(msgId, Const.TTL, name, localAddress, localPort);
 		}
 	}
-	
 	
 	public boolean sayHello(InetSocketAddress addr) throws RemoteException, NotBoundException {
 		String address = addr.getHostString();

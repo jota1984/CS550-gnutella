@@ -29,6 +29,7 @@
         <mkdir dir="bin"/>
         <copy includeemptydirs="false" todir="bin">
             <fileset dir="src">
+                <exclude name="**/*.launch"/>
                 <exclude name="**/*.java"/>
             </fileset>
         </copy>
@@ -62,19 +63,19 @@
     </target>
     <target name="Peer">
         <java classname="japster2.peer.Peer" failonerror="true" fork="yes">
-            <arg line="-i -D ${env_var:HOME}/tmp -L 127.0.0.1 -P 9997"/>
+            <arg line="-D ${env_var:HOME}/tmp -L 127.0.0.1 -P 9997"/>
             <classpath refid="run.Peer.classpath"/>
         </java>
     </target>
     <target name="Peer_2">
         <java classname="japster2.peer.Peer" failonerror="true" fork="yes">
-            <arg line="-i -D ${env_var:HOME}/tmp2 -L 127.0.0.1 -P 9996"/>
+            <arg line="-D ${env_var:HOME}/tmp2 -L 127.0.0.1 -P 9996 -N 127.0.0.1:9995,127.0.0.1:9997"/>
             <classpath refid="run.Peer_2.classpath"/>
         </java>
     </target>
     <target name="Peer_3">
         <java classname="japster2.peer.Peer" failonerror="true" fork="yes">
-            <arg line="-i -D ${env_var:HOME}/tmp3 -L 127.0.0.1 -P 9995"/>
+            <arg line="-D ${env_var:HOME}/tmp3 -L 127.0.0.1 -P 9995"/>
             <classpath refid="run.Peer_3.classpath"/>
         </java>
     </target>
