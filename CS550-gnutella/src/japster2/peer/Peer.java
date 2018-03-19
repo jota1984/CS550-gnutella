@@ -48,7 +48,6 @@ public class Peer implements FileServer, PeerNode {
 	private String localAddress;
 	private int localPort; 
 	private String fileDirectoryName;
-	private String indexAddress; 
 	private int msgIdSeq; 
 	
 	private ArrayList<PeerNode> neighbors;
@@ -72,11 +71,9 @@ public class Peer implements FileServer, PeerNode {
 	 * @param fileDirectory This is the directory containing the files that will be shared and where new files
 	 * will be created. 
 	 */
-	public Peer(String indexAddress, 
-			String localAddress, 
+	public Peer(String localAddress, 
 			int localPort, 
 			String fileDirectory ) { 
-		this.indexAddress = indexAddress;
 		this.localAddress = localAddress;
 		this.localPort = localPort;
 		this.fileDirectoryName = fileDirectory;
@@ -106,8 +103,7 @@ public class Peer implements FileServer, PeerNode {
 			System.setProperty("java.rmi.server.hostname",cmd.getOptionValue("L"));
 
 			//Create a new Peer object using command line arguments
-			Peer peer = new Peer(cmd.getOptionValue("I"),
-					cmd.getOptionValue("L"),
+			Peer peer = new Peer(cmd.getOptionValue("L"),
 					Integer.parseInt(cmd.getOptionValue("P")),
 					cmd.getOptionValue("D"));
 
@@ -136,12 +132,6 @@ public class Peer implements FileServer, PeerNode {
 	private static void createOptions() {
 		options = new Options();
 		
-		Option indexAddress   = Option.builder("I")
-				.argName( "ip_address" )
-                .hasArg()
-                .desc(  "use provided ip address as IndexServer" )
-                .longOpt("index-address")
-                .build();
 		Option localAddress   = Option.builder("L")
 				.argName( "ip_address" )
                 .hasArg()
@@ -170,7 +160,6 @@ public class Peer implements FileServer, PeerNode {
                 .longOpt("interactive")
                 .build();
 		
-		options.addOption(indexAddress);
 		options.addOption(localAddress);
 		options.addOption(localPort);
 		options.addOption(directory);
