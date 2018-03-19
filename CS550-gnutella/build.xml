@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- WARNING: Eclipse auto-generated file.
+              Any modifications will be overwritten.
+              To include a user specific buildfile here, simply create one in the same
+              directory with the processing instruction <?eclipse.ant.import?>
+              as the first entry and export the buildfile again. --><project basedir="." default="build" name="CS550-gnutella">
+    <property environment="env"/>
+    <property name="env_var:HOME" value="env.HOME"/>
+    <property name="debuglevel" value="source,lines,vars"/>
+    <property name="target" value="9"/>
+    <property name="source" value="9"/>
+    <path id="CS550-gnutella.classpath">
+        <pathelement location="bin"/>
+        <pathelement location="lib/commons-cli-1.4.jar"/>
+    </path>
+    <path id="run.Peer.classpath">
+        <path refid="CS550-gnutella.classpath"/>
+        <pathelement location="lib/commons-cli-1.4.jar"/>
+    </path>
+    <path id="run.Peer_2.classpath">
+        <path refid="CS550-gnutella.classpath"/>
+        <pathelement location="lib/commons-cli-1.4.jar"/>
+    </path>
+    <path id="run.Peer_3.classpath">
+        <path refid="CS550-gnutella.classpath"/>
+        <pathelement location="lib/commons-cli-1.4.jar"/>
+    </path>
+    <target name="init">
+        <mkdir dir="bin"/>
+        <copy includeemptydirs="false" todir="bin">
+            <fileset dir="src">
+                <exclude name="**/*.java"/>
+            </fileset>
+        </copy>
+    </target>
+    <target name="clean">
+        <delete dir="bin"/>
+    </target>
+    <target depends="clean" name="cleanall"/>
+    <target depends="build-subprojects,build-project" name="build"/>
+    <target name="build-subprojects"/>
+    <target depends="init" name="build-project">
+        <echo message="${ant.project.name}: ${ant.file}"/>
+        <javac debug="true" debuglevel="${debuglevel}" destdir="bin" includeantruntime="false" source="${source}" target="${target}">
+            <src path="src"/>
+            <classpath refid="CS550-gnutella.classpath"/>
+        </javac>
+    </target>
+    <target description="Build all projects which reference this project. Useful to propagate changes." name="build-refprojects"/>
+    <target description="copy Eclipse compiler jars to ant lib directory" name="init-eclipse-compiler">
+        <copy todir="${ant.library.dir}">
+            <fileset dir="${ECLIPSE_HOME}/plugins" includes="org.eclipse.jdt.core_*.jar"/>
+        </copy>
+        <unzip dest="${ant.library.dir}">
+            <patternset includes="jdtCompilerAdapter.jar"/>
+            <fileset dir="${ECLIPSE_HOME}/plugins" includes="org.eclipse.jdt.core_*.jar"/>
+        </unzip>
+    </target>
+    <target description="compile project with Eclipse compiler" name="build-eclipse-compiler">
+        <property name="build.compiler" value="org.eclipse.jdt.core.JDTCompilerAdapter"/>
+        <antcall target="build"/>
+    </target>
+    <target name="Peer">
+        <java classname="japster2.peer.Peer" failonerror="true" fork="yes">
+            <arg line="-i -D ${env_var:HOME}/tmp -L 127.0.0.1 -P 9997"/>
+            <classpath refid="run.Peer.classpath"/>
+        </java>
+    </target>
+    <target name="Peer_2">
+        <java classname="japster2.peer.Peer" failonerror="true" fork="yes">
+            <arg line="-i -D ${env_var:HOME}/tmp2 -L 127.0.0.1 -P 9996"/>
+            <classpath refid="run.Peer_2.classpath"/>
+        </java>
+    </target>
+    <target name="Peer_3">
+        <java classname="japster2.peer.Peer" failonerror="true" fork="yes">
+            <arg line="-i -D ${env_var:HOME}/tmp3 -L 127.0.0.1 -P 9995"/>
+            <classpath refid="run.Peer_3.classpath"/>
+        </java>
+    </target>
+</project>
