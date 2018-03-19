@@ -42,10 +42,6 @@ public class PeerConsole extends Thread {
         BufferedReader cin = new BufferedReader( new InputStreamReader(System.in));
         String line;
         
-        //Used to store a FileLocation object obtained after a search command
-        FileLocation location = null;
-        //Used to store fileName of file searched using the search command
-        String fileName = null;
         //Used to store search results
         ArrayList<FileLocation> results;
         try {
@@ -67,6 +63,11 @@ public class PeerConsole extends Thread {
 					} catch (Exception e1) {
 						System.out.println("Failed to contact peer");
 						e1.printStackTrace();
+					}
+					break;
+				case "neighbors": 
+					for( InetSocketAddress neighbor : peer.getNeighbors().keySet() ) {
+						System.out.println(neighbor);
 					}
 					break;
 				case "search": 
