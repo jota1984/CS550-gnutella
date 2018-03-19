@@ -50,7 +50,11 @@ public class Peer implements FileServer, PeerNode {
 	private String fileDirectoryName;
 	private int msgIdSeq; 
 	
-	private ArrayList<PeerNode> neighbors;
+	private Hashtable<InetSocketAddress,PeerNode> neighbors;
+	public Hashtable<InetSocketAddress,PeerNode> getNeighbors() {
+		return neighbors;
+	}
+
 	private Hashtable<String,PeerNode> seenMessages;
 	private ArrayList<FileLocation> fileLocations;
 
@@ -78,7 +82,7 @@ public class Peer implements FileServer, PeerNode {
 		this.localPort = localPort;
 		this.fileDirectoryName = fileDirectory;
 		
-		neighbors = new ArrayList <PeerNode>();
+		neighbors = new Hashtable <InetSocketAddress,PeerNode>();
 		seenMessages = new Hashtable <String,PeerNode>();
 		fileLocations = new ArrayList <FileLocation>();
 		msgIdSeq = 0; 
@@ -177,7 +181,7 @@ public class Peer implements FileServer, PeerNode {
 	public void search(String name) throws RemoteException {
 		String msgId = localAddress + ":" + localPort + "_" + msgIdSeq++; 
 		seenMessages.put(msgId, this);
-		for ( PeerNode neighbor : neighbors) {
+		for ( PeerNode neighbor : neighbors.values() ) {
 			neighbor.query(msgId, Const.TTL, name, localAddress, localPort);
 		}
 	}
@@ -191,9 +195,9 @@ public class Peer implements FileServer, PeerNode {
 		Registry registry = LocateRegistry.getRegistry(address, port);
 		PeerNode neighbor = (PeerNode) registry.lookup(Const.PEER_SERVICE_NAME);
 		
-	
-		if (neighbor.hello( new InetSocketAddress(localAddress, localPort))) {
-			neighbors.add(neighbor);
+		InetSocketAddress localAddr= new InetSocketAddress(localAddress, localPort);
+		if (neighbor.hello( localAddr)) {
+			neighbors.put(addr,neighbor);
 			System.out.println("Added neighbor successfully");
 			return true;
 		}
@@ -288,7 +292,7 @@ public class Peer implements FileServer, PeerNode {
 			registry = LocateRegistry.getRegistry(address, port);
 			PeerNode neighbor = (PeerNode) registry.lookup(Const.PEER_SERVICE_NAME);
 			
-			neighbors.add(neighbor);
+			neighbors.put(peerAddress,neighbor);
 		} catch (RemoteException | NotBoundException e) {
 			return false;
 		}
@@ -318,7 +322,7 @@ public class Peer implements FileServer, PeerNode {
 			
 			seenMessages.put(msgId, sender);
 			
-			for ( PeerNode neighbor : neighbors) {
+			for ( PeerNode neighbor : neighbors.values()) {
 				try { 
 					//Dont send query back to sender
 					if ( sender.equals(neighbor) )
