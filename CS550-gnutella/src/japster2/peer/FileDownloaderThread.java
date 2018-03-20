@@ -22,6 +22,10 @@ public class FileDownloaderThread extends Thread {
 	private int port; 
 	private boolean quiet; 
 	
+	private Peer peer; 
+	
+	private FileLocation location;
+	
 	private FileOutputStream output = null;
 	private Socket socket = null;
 	private InputStream input = null;
@@ -33,12 +37,14 @@ public class FileDownloaderThread extends Thread {
 	 * @param port int representing the port where the remote peer is serving the file
 	 * @param quiet Wont print progress if true
 	 */
-	public FileDownloaderThread(String fileName, long fileSize, String address, int port, boolean quiet) { 
-		this.fileName = fileName;
-		this.fileSize = fileSize; 
-		this.address = address; 
-		this.port = port; 
+	public FileDownloaderThread(Peer peer, String newFileName, int port, FileLocation location, boolean quiet) { 
+		this.fileName = newFileName;
+		this.fileSize = location.getSize(); 
+		this.address = location.getLocationAddress().getHostString(); 
+		this.port = port;
+		this.location = location;
 		this.quiet = quiet; 
+		this.peer = peer; 
 	}
 	
 	/**
@@ -108,6 +114,7 @@ public class FileDownloaderThread extends Thread {
 			output.flush();
 			if( !quiet)
 				System.out.println("Download success (" + fileName + ")");
+			peer.addRemoteFile(location);
 		} catch (IOException e) {
 			System.out.println("Download failed (" + fileName + ")");
 			e.printStackTrace();

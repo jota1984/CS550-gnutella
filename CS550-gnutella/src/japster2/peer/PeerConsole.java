@@ -7,7 +7,6 @@ import java.net.InetSocketAddress;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
-import java.util.Hashtable;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 
@@ -43,6 +42,8 @@ public class PeerConsole extends Thread {
         BufferedReader cin = new BufferedReader( new InputStreamReader(System.in));
         String line;
         
+        //Used to store list of remoteFiles
+        ArrayList<FileLocation> remoteFiles; 
         //Used to store list of local files
         ArrayList<FileLocation> localFiles;
         //Used to store search results
@@ -116,6 +117,13 @@ public class PeerConsole extends Thread {
 					System.out.println("Type \"update <i>\" to update the version of a file from the following list");
 					for( int i = 0; i < localFiles.size(); i++) {
 						System.out.println("" + i + "->"  + localFiles.get(i))
+;					}
+					break;
+				case "viewremote": 
+					remoteFiles = peer.getRemoteFiles();
+					System.out.println("Downloaded files");
+					for( int i = 0; i < remoteFiles.size(); i++) {
+						System.out.println("" + i + "->"  + remoteFiles.get(i))
 ;					}
 					break;
 				case "update":

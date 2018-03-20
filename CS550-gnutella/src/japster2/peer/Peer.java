@@ -58,7 +58,16 @@ public class Peer implements FileServer, PeerNode {
 
 	private Hashtable<String,PeerNode> seenMessages;
 	
-	private ArrayList<FileLocation> localFiles; 
+	private ArrayList<FileLocation> localFiles;
+	private ArrayList<FileLocation> remoteFiles; 
+	
+	public ArrayList<FileLocation> getRemoteFiles() {
+		return remoteFiles;
+	}
+	
+	public void addRemoteFile(FileLocation loc) {
+		remoteFiles.add(loc);
+	}
 	
 	public ArrayList<FileLocation> getLocalFiles() {
 		return localFiles;
@@ -94,6 +103,8 @@ public class Peer implements FileServer, PeerNode {
 		fileLocations = new ArrayList <FileLocation>();
 		
 		localFiles = new ArrayList<FileLocation>();
+		remoteFiles = new ArrayList<FileLocation>();
+		
 		msgIdSeq = 0; 
 	}
 	
@@ -285,7 +296,6 @@ public class Peer implements FileServer, PeerNode {
 		String address = location.getLocationAddress().getHostString();
 		int port = location.getLocationAddress().getPort();
 		String fileName = location.getName();
-		long size = location.getSize();
 		
 		//check if file already exists
 		String newfileName = fileDirectoryName + File.separator + fileName;
@@ -303,7 +313,7 @@ public class Peer implements FileServer, PeerNode {
 		
 		//Start a downloader thread to download the file 
 		FileDownloaderThread fileDownloader = 
-				new FileDownloaderThread(newfileName, size, address, downloadPort, quiet);
+				new FileDownloaderThread(this, newfileName, downloadPort, location, quiet);
 		fileDownloader.start();
 		
 		return fileDownloader;
