@@ -50,14 +50,21 @@ public class Peer implements FileServer, PeerNode {
 	private String fileDirectoryName;
 	private int msgIdSeq; 
 	
+	
 	private Hashtable<InetSocketAddress,PeerNode> neighbors;
 	public Hashtable<InetSocketAddress,PeerNode> getNeighbors() {
 		return neighbors;
 	}
 
 	private Hashtable<String,PeerNode> seenMessages;
-	private ArrayList<FileLocation> fileLocations;
+	
+	private ArrayList<FileLocation> localFiles; 
+	
+	public ArrayList<FileLocation> getLocalFiles() {
+		return localFiles;
+	}
 
+	private ArrayList<FileLocation> fileLocations;
 	
 	public ArrayList<FileLocation> getFileLocations() {
 		return fileLocations;
@@ -85,6 +92,8 @@ public class Peer implements FileServer, PeerNode {
 		neighbors = new Hashtable <InetSocketAddress,PeerNode>();
 		seenMessages = new Hashtable <String,PeerNode>();
 		fileLocations = new ArrayList <FileLocation>();
+		
+		localFiles = new ArrayList<FileLocation>();
 		msgIdSeq = 0; 
 	}
 	
@@ -121,6 +130,7 @@ public class Peer implements FileServer, PeerNode {
 				System.exit(0);
 			}
 			
+			//Load neighbors from command line
 			if( cmd.hasOption("N") ) {
 				String neighbor_seed = cmd.getOptionValue("N");
 				for(String n : neighbor_seed.split(",") ) {
@@ -134,6 +144,10 @@ public class Peer implements FileServer, PeerNode {
 					}
 				}
 			}
+			
+			//Load files from local dir
+			System.out.println("loading local files");
+			peer.loadFiles();
 			
 			
 			//System.out.println("Starting DirWatcherThread");
@@ -188,6 +202,23 @@ public class Peer implements FileServer, PeerNode {
 		options.addOption(help);
 	}
 	
+	public void loadFiles() {
+		
+		File fileDir = new File(fileDirectoryName);
+		File[] files = fileDir.listFiles();
+		long fileSize; 
+		String fileName; 
+
+		for (int i = 0; i < files.length; i++) {
+			if (files[i].isFile() && !files[i].isHidden()) {
+				fileSize = files[i].length();
+				fileName = files[i].getName();
+				FileLocation location = new FileLocation(new InetSocketAddress(localAddress, localPort), fileName, fileSize);
+				localFiles.add(location);
+			} 
+		}
+	}
+	
 	/**
 	 * Uses the Index stub to execute the search method on the IdexServer remote
 	 * object.
@@ -240,6 +271,7 @@ public class Peer implements FileServer, PeerNode {
 		UnicastRemoteObject.unexportObject(this, false);
 		UnicastRemoteObject.unexportObject(registry, false);
 	}
+
 	
 	/**
 	 * Download a file from another peer represented by a FileLocation
