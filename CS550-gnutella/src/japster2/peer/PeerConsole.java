@@ -94,9 +94,11 @@ public class PeerConsole extends Thread {
 						FileLocation loc = results.get(i);
 						System.out.println("Attempting to download " + loc);
 						try {
-							peer.download(loc.getName(), loc, false);
+							peer.download(loc, false);
 						} catch (NotBoundException e) {
-							System.out.println("Download failed." + e.getMessage());
+							System.out.println("Download failed. " + e.getMessage());
+						} catch (IOException e) {
+							System.out.println("Download failed. " + e.getMessage());
 						}
 					} catch( NoSuchElementException e) { 
 						System.out.println("Must specify index");

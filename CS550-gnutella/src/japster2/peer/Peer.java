@@ -249,9 +249,10 @@ public class Peer implements FileServer, PeerNode {
 	 * @throws NotBoundException
 	 * @throws IOException 
 	 */
-	public Thread download(String fileName, FileLocation location, boolean quiet) throws NotBoundException, IOException {
+	public Thread download(FileLocation location, boolean quiet) throws NotBoundException, IOException {
 		String address = location.getLocationAddress().getHostString();
 		int port = location.getLocationAddress().getPort();
+		String fileName = location.getName();
 		long size = location.getSize();
 		
 		//check if file already exists
