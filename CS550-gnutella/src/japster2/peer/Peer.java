@@ -245,6 +245,14 @@ public class Peer implements FileServer, PeerNode {
 		}
 	}
 	
+	public void sendInvalidate(FileLocation location) throws RemoteException {
+		String msgId = localAddress + ":" + localPort + "_" + msgIdSeq++; 
+		seenMessages.put(msgId, this);
+		for ( PeerNode neighbor : neighbors.values() ) {
+			neighbor.invalidate(msgId, Const.TTL, location.getName(), location, localAddress, localPort);
+		}
+	}
+	
 	public boolean sayHello(InetSocketAddress addr) throws RemoteException, NotBoundException {
 		String address = addr.getHostString();
 		int port = addr.getPort();
@@ -470,5 +478,58 @@ public class Peer implements FileServer, PeerNode {
 				}
 			}
 		}.start();		
+	}
+
+	@Override
+	public void invalidate(String msgId, long ttl, String fileName, FileLocation fileLocation, String host, int port)
+			throws RemoteException {
+		
+		long newttl = ttl - 1;
+		
+		new Thread() { 
+			public void run() { 
+					if (seenMessages.containsKey(msgId)) {
+						System.out.println("Duped message: do nothing");
+						return;
+					} else {
+						
+						//Get PeerNode object of sender
+						PeerNode sender = null;
+						Registry senderReg; 
+						try {
+							senderReg = LocateRegistry.getRegistry(host, port);
+							sender = (PeerNode) senderReg.lookup(Const.PEER_SERVICE_NAME);
+						} catch (RemoteException | NotBoundException e) {
+							System.out.println("Cant contact sender");
+							return;
+						}
+						
+						seenMessages.put(msgId, sender);
+						
+						//broadcast message
+						if (newttl > 0) {
+							for ( PeerNode neighbor : neighbors.values()) {
+								try { 
+									//Dont send query back to sender
+									if ( sender.equals(neighbor) )
+										continue;
+									neighbor.invalidate(msgId, ttl, fileName, fileLocation, localAddress, localPort);
+								} catch(RemoteException e) {
+									System.out.println("Failed to contact neighbor");
+								}
+							}						
+						}
+						
+						//Find out if we have downloaded that file and mark as invalid if found
+						for( FileLocation loc : remoteFiles ) {
+							if (loc.getName().equals(fileName) ) {
+								System.out.println("Received invalidate message for " +
+										fileName + "; New version is " + fileLocation.getVersion() );
+								 loc.invalidate();
+							}
+						}
+					}				
+			}
+		}.start();
 	}
 }

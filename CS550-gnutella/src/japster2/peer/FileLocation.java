@@ -21,6 +21,7 @@ public class FileLocation implements Serializable{
 	private String fileName;
 	private long fileSize; 
 	private int version; 
+	private boolean valid;
 
 	
 	/**
@@ -34,6 +35,7 @@ public class FileLocation implements Serializable{
 		this.fileName = name;
 		this.fileSize = size; 
 		this.version = version;
+		valid = true; 
 	}
 	
 	public String getName() {
@@ -48,6 +50,13 @@ public class FileLocation implements Serializable{
 		version++;
 	}
 	
+	public void invalidate() { 
+		valid = false; 
+	}
+	
+	public boolean isValid() {
+		return valid;
+	}
 	
 	public long getSize() {
 		return fileSize;
@@ -59,11 +68,15 @@ public class FileLocation implements Serializable{
 
 	@Override
 	public String toString() {
-		return "" + fileName + "@" +
+		String str = fileName + "@" +
 				locationAddress.getHostString() + ":" +
 				locationAddress.getPort() +
 				"(version " + version + ")" + 
 				"(" + fileSize + "bytes)";
+		if (!valid ) {
+			str += "(INVALID)";
+		}
+		return str; 
 	}
 	
 	@Override

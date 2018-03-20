@@ -130,8 +130,10 @@ public class PeerConsole extends Thread {
 					try { 
 						int i = s.nextInt();
 						localFiles = peer.getLocalFiles();
-						localFiles.get(i).touch();
-						System.out.println("Updated -> " + localFiles.get(i) );
+						FileLocation file = localFiles.get(i);
+						file.touch();
+						System.out.println("Updated -> " + file );
+						peer.sendInvalidate(file);
 					} catch( NoSuchElementException e) { 
 						System.out.println("Must specify index");
 					}
