@@ -319,73 +319,96 @@ public class Peer implements FileServer, PeerNode {
 
 	@Override
 	public void query(String msgId, long ttl, String fileName, String host, int port) throws RemoteException {
-		System.out.println("Query received " + msgId + ":"+ ttl +":" + fileName + " from " + host + ":" + port);
-		if (seenMessages.contains(msgId)) {
-			System.out.println("Duped message: do nothing");
-			return;
-		} else {
-			
-			//Get PeerNode object of sender
-			PeerNode sender = null;
-			Registry senderReg; 
-			try {
-				senderReg = LocateRegistry.getRegistry(host, port);
-				sender = (PeerNode) senderReg.lookup(Const.PEER_SERVICE_NAME);
-			} catch (RemoteException | NotBoundException e) {
-				System.out.println("Cant contact sender");
-				return;
-			}
-			
-			seenMessages.put(msgId, sender);
-			
-			for ( PeerNode neighbor : neighbors.values()) {
-				try { 
-					//Dont send query back to sender
-					if ( sender.equals(neighbor) )
-						continue;
-					neighbor.query(msgId, --ttl, fileName, localAddress, localPort);
-				} catch(RemoteException e) {
-					System.out.println("Failed to contact neighbor");
+
+		final long newttl = ttl-1;
+		new Thread() {
+			public void run() { 
+
+				System.out.println("Query received " + msgId + ":"+ ttl +":" + fileName + " from " + host + ":" + port);
+				if (seenMessages.contains(msgId)) {
+					System.out.println("Duped message: do nothing");
+					return;
+				} else {
+					
+					//Get PeerNode object of sender
+					PeerNode sender = null;
+					Registry senderReg; 
+					try {
+						senderReg = LocateRegistry.getRegistry(host, port);
+						sender = (PeerNode) senderReg.lookup(Const.PEER_SERVICE_NAME);
+					} catch (RemoteException | NotBoundException e) {
+						System.out.println("Cant contact sender");
+						return;
+					}
+					
+					seenMessages.put(msgId, sender);
+					if (newttl > 0) {
+						for ( PeerNode neighbor : neighbors.values()) {
+							try { 
+								//Dont send query back to sender
+								if ( sender.equals(neighbor) )
+									continue;
+								neighbor.query(msgId, ttl, fileName, localAddress, localPort);
+							} catch(RemoteException e) {
+								System.out.println("Failed to contact neighbor");
+							}
+						}						
+					}
+
+					
+					File file = new File(fileDirectoryName +  File.separator + fileName );
+					System.out.println(file);
+					if( file.exists() ) {
+						System.out.println("File found");
+						FileLocation fileLocation = new FileLocation(new InetSocketAddress(localAddress,localPort),
+								fileName,
+								file.length()
+								);
+								
+						try {
+							sender.hitquery(msgId, Const.TTL, fileName, fileLocation);
+						} catch (RemoteException e) {
+							System.out.println("failed send back reponse");
+						}
+					} else {
+						System.out.println("File not found");
+					}
+					
 				}
+				
 			}
-			
-			File file = new File(fileDirectoryName +  File.separator + fileName );
-			System.out.println(file);
-			if( file.exists() ) {
-				System.out.println("File found");
-				FileLocation fileLocation = new FileLocation(new InetSocketAddress(localAddress,localPort),
-						fileName,
-						file.length()
-						);
-						
-				sender.hitquery(msgId, Const.TTL, fileName, fileLocation);
-			} else {
-				System.out.println("File not found");
-			}
-			
-		}
+		}.start();
 	}
 
 	@Override
 	public void hitquery(String msgId, long ttl, String fileName, FileLocation fileLocation) throws RemoteException{
-		String host = fileLocation.getLocationAddress().getHostString();
-		int port = fileLocation.getLocationAddress().getPort();
-		System.out.println("Hitquery received " + msgId + ":"+ ttl +":" + fileName + " from " + host + ":" + port);
-		if(!seenMessages.containsKey(msgId)) {
-			System.out.println("Unknown query");
-			return;
-		} else { 
-			PeerNode upstream = seenMessages.get(msgId);
-			if(upstream == this) { //If query was initiated by this peer
-				System.out.println("File found, Type \"results\" to view result");
-				if( !fileLocations.contains(fileLocation) )
-					fileLocations.add(fileLocation);
-				return;
-			} else {
-				System.out.println("Forwarding hitquery upstream");
-				upstream.hitquery(msgId, --ttl, fileName, fileLocation);
+		long newttl = ttl - 1;
+		PeerNode localPeer = this; 
+		new Thread() {
+			public void run() {
+				String host = fileLocation.getLocationAddress().getHostString();
+				int port = fileLocation.getLocationAddress().getPort();
+				System.out.println("Hitquery received " + msgId + ":"+ ttl +":" + fileName + " from " + host + ":" + port);
+				if(!seenMessages.containsKey(msgId)) {
+					System.out.println("Unknown query");
+					return;
+				} else { 
+					PeerNode upstream = seenMessages.get(msgId);
+					if(upstream == localPeer) { //If query was initiated by this peer
+						System.out.println("File found, Type \"results\" to view result");
+						if( !fileLocations.contains(fileLocation) )
+							fileLocations.add(fileLocation);
+						return;
+					} else if (newttl > 0){
+						System.out.println("Forwarding hitquery upstream");
+						try {
+							upstream.hitquery(msgId, newttl, fileName, fileLocation);
+						} catch (RemoteException e) {
+							System.out.println("Failed to send back hitquery");
+						}
+					}
+				}
 			}
-		}
-		
+		}.start();		
 	}
 }
