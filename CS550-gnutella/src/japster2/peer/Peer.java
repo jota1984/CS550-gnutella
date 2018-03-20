@@ -403,11 +403,29 @@ public class Peer implements FileServer, PeerNode {
 					System.out.println(file);
 					if( file.exists() ) {
 						System.out.println("File found");
-						FileLocation fileLocation = new FileLocation(new InetSocketAddress(localAddress,localPort),
-								fileName,
-								file.length(), -1 //TODO get correct version
-								);
-								
+						
+						//Find FileLocation on local file table
+						FileLocation fileLocation = null;
+						for ( FileLocation loc : localFiles ) {
+							if (loc.getName().equals(fileName) ) {
+								fileLocation = loc; 
+							}
+						}
+						
+						//Find FileLocation on remote file table if not found on local
+						if ( fileLocation == null ) {
+							for( FileLocation loc : remoteFiles ) {
+								if (loc.getName().equals(fileName) ) {
+									//Create new file location 
+									fileLocation = new FileLocation(new InetSocketAddress(localAddress,localPort),
+											fileName,
+											file.length(), 
+											loc.getVersion()
+											);
+								}
+							}
+						}
+
 						try {
 							sender.hitquery(msgId, Const.TTL, fileName, fileLocation);
 						} catch (RemoteException e) {
@@ -439,8 +457,7 @@ public class Peer implements FileServer, PeerNode {
 					PeerNode upstream = seenMessages.get(msgId);
 					if(upstream == localPeer) { //If query was initiated by this peer
 						System.out.println("File found, Type \"results\" to view result");
-						if( !fileLocations.contains(fileLocation) )
-							fileLocations.add(fileLocation);
+						fileLocations.add(fileLocation);
 						return;
 					} else if (newttl > 0){
 						System.out.println("Forwarding hitquery upstream");
