@@ -326,7 +326,7 @@ public class Peer implements FileServer, PeerNode {
 			public void run() { 
 
 				System.out.println("Query received " + msgId + ":"+ ttl +":" + fileName + " from " + host + ":" + port);
-				if (seenMessages.contains(msgId)) {
+				if (seenMessages.containsKey(msgId)) {
 					System.out.println("Duped message: do nothing");
 					return;
 				} else {
