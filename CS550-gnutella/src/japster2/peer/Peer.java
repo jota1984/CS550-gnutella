@@ -213,7 +213,7 @@ public class Peer implements FileServer, PeerNode {
 			if (files[i].isFile() && !files[i].isHidden()) {
 				fileSize = files[i].length();
 				fileName = files[i].getName();
-				FileLocation location = new FileLocation(new InetSocketAddress(localAddress, localPort), fileName, fileSize);
+				FileLocation location = new FileLocation(new InetSocketAddress(localAddress, localPort), fileName, fileSize,1);
 				localFiles.add(location);
 			} 
 		}
@@ -395,7 +395,7 @@ public class Peer implements FileServer, PeerNode {
 						System.out.println("File found");
 						FileLocation fileLocation = new FileLocation(new InetSocketAddress(localAddress,localPort),
 								fileName,
-								file.length()
+								file.length(), -1 //TODO get correct version
 								);
 								
 						try {

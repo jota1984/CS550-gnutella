@@ -18,9 +18,9 @@ public class FileLocation implements Serializable{
 	private static final long serialVersionUID = 1L;
 	
 	private InetSocketAddress locationAddress;
-	private Date refreshDate;
 	private String fileName;
 	private long fileSize; 
+	private int version; 
 
 	
 	/**
@@ -29,24 +29,25 @@ public class FileLocation implements Serializable{
 	 * @param name String representing the name of the file
 	 * @param size long representing the size of the file on the peer
 	 */
-	public FileLocation(InetSocketAddress address, String name, long size) {
+	public FileLocation(InetSocketAddress address, String name, long size, int version) {
 		locationAddress = address;
 		this.fileName = name;
 		this.fileSize = size; 
-		refresh();  
-	}
-	
-	public void refresh() {
-		refreshDate = new Date(); 
+		this.version = version;
 	}
 	
 	public String getName() {
 		return fileName; 
 	}
 	
-	public Date getRefreshDate() { 
-		return refreshDate; 
+	public int getVersion() {
+		return version;
 	}
+	
+	public void touch() {
+		version++;
+	}
+	
 	
 	public long getSize() {
 		return fileSize;
@@ -58,8 +59,10 @@ public class FileLocation implements Serializable{
 
 	@Override
 	public String toString() {
-		return "" + fileName + locationAddress.toString() + 
-				"(" + refreshDate + ")" +
+		return "" + fileName + "@" +
+				locationAddress.getHostString() + ":" +
+				locationAddress.getPort() +
+				"(version " + version + ")" + 
 				"(" + fileSize + "bytes)";
 	}
 	

@@ -43,6 +43,8 @@ public class PeerConsole extends Thread {
         BufferedReader cin = new BufferedReader( new InputStreamReader(System.in));
         String line;
         
+        //Used to store list of local files
+        ArrayList<FileLocation> localFiles;
         //Used to store search results
         ArrayList<FileLocation> results;
         try {
@@ -110,11 +112,21 @@ public class PeerConsole extends Thread {
 					System.out.println("FileServer object exported");
 					break;
 				case "viewlocal": 
-					ArrayList<FileLocation> localFiles = peer.getLocalFiles();
+					localFiles = peer.getLocalFiles();
 					System.out.println("Type \"update <i>\" to update the version of a file from the following list");
 					for( int i = 0; i < localFiles.size(); i++) {
 						System.out.println("" + i + "->"  + localFiles.get(i))
 ;					}
+					break;
+				case "update":
+					try { 
+						int i = s.nextInt();
+						localFiles = peer.getLocalFiles();
+						localFiles.get(i).touch();
+						System.out.println("Updated -> " + localFiles.get(i) );
+					} catch( NoSuchElementException e) { 
+						System.out.println("Must specify index");
+					}
 					break;
 				case "quit":
 			        System.out.println("quitting");
