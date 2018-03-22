@@ -340,6 +340,31 @@ public class Peer implements FileServer, PeerNode {
 		}
 	}
 	
+	public void refreshFiles()  {
+		for( int i = remoteFiles.size() -1; i >= 0; i--) {//Traverse list backwards to ensure safe deletion during traversal
+			FileLocation loc = remoteFiles.get(i); 
+			if (!loc.isValid()) {
+				String fileName = fileDirectoryName + File.separator + loc.getName();
+				new File(fileName).delete();
+				remoteFiles.remove(i);
+				try {
+					//Query the Peer's registry to obtain its FileServer remote object
+					String address = loc.getLocationAddress().getHostString();
+					int port = loc.getLocationAddress().getPort();
+					Registry registry = LocateRegistry.getRegistry(address, port);
+					PeerNode owner = (PeerNode) registry.lookup(Const.PEER_SERVICE_NAME);	
+					
+					//get new ttr
+					FileLocation newFileLocation = owner.poll(loc.getName());
+					
+					download( newFileLocation, false );
+				} catch (NotBoundException | IOException e) {
+					System.out.println("Failed to download new copy for " + loc.getName() );
+				} 
+			}
+		}
+	}
+	
 	public void sendPolls() {
 		for( FileLocation loc : remoteFiles ) {
 			if (loc.getTtr() < 5 ) {
@@ -352,11 +377,11 @@ public class Peer implements FileServer, PeerNode {
 					PeerNode owner = (PeerNode) registry.lookup(Const.PEER_SERVICE_NAME);	
 					
 					//get new ttr
-					int newttr = owner.poll(loc.getName(), loc.getVersion());
-					if ( newttr < 0 ) {
+					FileLocation newFileLocation = owner.poll(loc.getName());
+					if ( newFileLocation == null || newFileLocation.getVersion() > loc.getVersion() ) {
 						loc.invalidate();
 					} else {
-						loc.setTtr(newttr);
+						loc.setTtr(newFileLocation.getTtr());
 					}					
 				} catch (Exception e ) {
 					System.out.println("Poll failed");
@@ -614,7 +639,7 @@ public class Peer implements FileServer, PeerNode {
 	}
 	
 	@Override
-	public int poll(String fileName, int version) throws RemoteException {
+	public FileLocation poll(String fileName) throws RemoteException {
 		
 		//Find file on local file table 
 		FileLocation fileLocation = null;
@@ -628,14 +653,15 @@ public class Peer implements FileServer, PeerNode {
 		if ( fileLocation == null ) {
 			for( FileLocation loc : remoteFiles ) {
 				if (loc.getName().equals(fileName) ) {
-					fileLocation = loc;
+					fileLocation = new FileLocation(new InetSocketAddress(localAddress,localPort),
+							fileName,
+							loc.getSize(), 
+							loc.getVersion(),
+							getDefaultTtr()
+							);
 				}
 			}
 		}
-		
-		if( fileLocation.getVersion() > version ) 
-			return -1; 
-		else 
-			return getDefaultTtr();
+		return fileLocation;
 	}
 }

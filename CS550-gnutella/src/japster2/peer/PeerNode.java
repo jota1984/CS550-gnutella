@@ -14,5 +14,5 @@ public interface PeerNode extends Remote {
 
 	public void invalidate(String msgId, long ttl, String fileName, FileLocation fileLocation, String host, int port) throws RemoteException;
 
-	public int poll(String fileName, int version) throws RemoteException; 
+	public FileLocation poll(String fileName) throws RemoteException; 
 }

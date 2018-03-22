@@ -141,6 +141,9 @@ public class PeerConsole extends Thread {
 						System.out.println("Must specify index");
 					}
 					break;
+				case "refresh": 
+					peer.refreshFiles();
+					break;
 				case "quit":
 			        System.out.println("quitting");
 					System.exit(0);				
