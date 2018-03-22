@@ -2,7 +2,6 @@ package japster2.peer;
 
 import java.io.Serializable;
 import java.net.InetSocketAddress;
-import java.util.Date;
 
 /**
  * A FileLocation stores a InetSocketAddress object with the host and port
@@ -22,19 +21,49 @@ public class FileLocation implements Serializable{
 	private long fileSize; 
 	private int version; 
 	private boolean valid;
-
+	private int ttr;
+	private boolean expired;
 	
+	public int getTtr() {
+		return ttr;
+	}
+	
+	
+
+	public void setTtr(int ttr) {
+		this.ttr = ttr;
+		expired = false;
+	}
+
+	public void checkExpiration() {
+		if( expired )
+			return;
+		ttr -= Const.EXPIRATION_WATCH_PERIOD/1000;
+		
+		if( ttr <= 0 ) {
+			expired = true;
+			return;
+		}
+		expired = false;
+	}
+	
+	public boolean isExpired() {
+		return expired; 
+	}
+
 	/**
 	 * Creates a FileLocation object
 	 * @param address InetSocketAddress pointing to the Peer registering the file
 	 * @param name String representing the name of the file
 	 * @param size long representing the size of the file on the peer
 	 */
-	public FileLocation(InetSocketAddress address, String name, long size, int version) {
+	public FileLocation(InetSocketAddress address, String name, long size, int version, int ttr ) {
 		locationAddress = address;
 		this.fileName = name;
 		this.fileSize = size; 
 		this.version = version;
+		this.ttr = ttr;
+		expired = false; 
 		valid = true; 
 	}
 	
@@ -73,8 +102,11 @@ public class FileLocation implements Serializable{
 				locationAddress.getPort() +
 				"(version " + version + ")" + 
 				"(" + fileSize + "bytes)";
+		str += "(TTR " + ttr + ")";
 		if (!valid ) {
 			str += "(INVALID)";
+		} else if ( isExpired() ) {
+			str += "(TTR EXPIRED)";
 		}
 		return str; 
 	}

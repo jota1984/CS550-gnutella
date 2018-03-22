@@ -133,7 +133,10 @@ public class PeerConsole extends Thread {
 						FileLocation file = localFiles.get(i);
 						file.touch();
 						System.out.println("Updated -> " + file );
-						peer.sendInvalidate(file);
+						if( !peer.getPullMode() ) {
+							peer.sendInvalidate(file);
+						}
+						
 					} catch( NoSuchElementException e) { 
 						System.out.println("Must specify index");
 					}

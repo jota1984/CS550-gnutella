@@ -17,5 +17,9 @@ public class Const {
 	public static final int PEER_REGISTRY_PORT = 1098;
 	
 	public static final int TTL = 10; 
+	public static final int DEFAULT_TTR = 30; 
+	
+	public static final int POLL_PERIOD = 5000;
+	public static final int EXPIRATION_WATCH_PERIOD = 2000;
 
 }

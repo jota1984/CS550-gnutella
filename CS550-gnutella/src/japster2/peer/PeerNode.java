@@ -1,7 +1,6 @@
 package japster2.peer;
 
 import java.net.InetSocketAddress;
-import java.rmi.NotBoundException;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 
@@ -14,4 +13,6 @@ public interface PeerNode extends Remote {
 	public void hitquery(String msgId, long ttl, String fileName, FileLocation fileLocation) throws RemoteException;
 
 	public void invalidate(String msgId, long ttl, String fileName, FileLocation fileLocation, String host, int port) throws RemoteException;
+
+	public int poll(String fileName, int version) throws RemoteException; 
 }

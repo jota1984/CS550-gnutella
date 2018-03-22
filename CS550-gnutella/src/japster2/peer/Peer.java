@@ -50,7 +50,23 @@ public class Peer implements FileServer, PeerNode {
 	private String fileDirectoryName;
 	private int msgIdSeq; 
 	
+	private boolean pullMode; 
 	
+	private int defaultTtr; 
+	
+	public int getDefaultTtr() {
+		return defaultTtr;
+	}
+	public void setDefaultTtr(int defaultTtr) {
+		this.defaultTtr = defaultTtr;
+	}
+	public boolean getPullMode() {
+		return pullMode; 
+	}
+	public void setPullMode(boolean pullMode) {
+		this.pullMode = pullMode;
+	}
+
 	private Hashtable<InetSocketAddress,PeerNode> neighbors;
 	public Hashtable<InetSocketAddress,PeerNode> getNeighbors() {
 		return neighbors;
@@ -105,6 +121,10 @@ public class Peer implements FileServer, PeerNode {
 		localFiles = new ArrayList<FileLocation>();
 		remoteFiles = new ArrayList<FileLocation>();
 		
+		pullMode = false; 
+		
+		defaultTtr = Const.DEFAULT_TTR;
+		
 		msgIdSeq = 0; 
 	}
 	
@@ -156,10 +176,19 @@ public class Peer implements FileServer, PeerNode {
 				}
 			}
 			
+			if( cmd.hasOption("p")) {
+				peer.setPullMode(true);
+				if( cmd.hasOption("t")) {
+					peer.setDefaultTtr(Integer.parseInt(cmd.getOptionValue("t")));
+				}
+				new ExpirationWatcherThread(peer).start();
+				new PollerThread(peer).start();
+				
+			}
+			
 			//Load files from local dir
 			System.out.println("loading local files");
 			peer.loadFiles();
-			
 			
 			//System.out.println("Starting DirWatcherThread");
 			//new DirWatcherThread(peer).start();
@@ -167,7 +196,8 @@ public class Peer implements FileServer, PeerNode {
 			//Create a new PeerConsole attached to the Peer object
 			new PeerConsole(peer);
 		} catch (ParseException e) {
-			System.out.println("Error parsing arguments");
+			System.out.println("Error parsing arguments" + e.getMessage());
+			
 		} 
 	}
 	
@@ -182,6 +212,15 @@ public class Peer implements FileServer, PeerNode {
                 .hasArg()
                 .desc(  "use provided ip address as Local address to listen for other peer connections" )
                 .longOpt("local-address")
+                .build();		
+		Option ttrValue   = Option.builder("t")
+				.argName( "ttr" )
+                .hasArg()
+                .desc(  "ttr value in seconds of pull based consistency" )
+                .build();
+		Option pullFlag   = Option.builder("p")
+				.argName( "ip_address" )
+                .desc(  "Use pull approach for file consistency" )
                 .build();		
 		Option localPort   = Option.builder("P")
 				.argName( "port" )
@@ -207,10 +246,12 @@ public class Peer implements FileServer, PeerNode {
                 .build();	
 
 		options.addOption(neighbors);
+		options.addOption(pullFlag);
 		options.addOption(localAddress);
 		options.addOption(localPort);
 		options.addOption(directory);
 		options.addOption(help);
+		options.addOption(ttrValue);
 	}
 	
 	public void loadFiles() {
@@ -224,7 +265,7 @@ public class Peer implements FileServer, PeerNode {
 			if (files[i].isFile() && !files[i].isHidden()) {
 				fileSize = files[i].length();
 				fileName = files[i].getName();
-				FileLocation location = new FileLocation(new InetSocketAddress(localAddress, localPort), fileName, fileSize,1);
+				FileLocation location = new FileLocation(new InetSocketAddress(localAddress, localPort), fileName, fileSize,1, defaultTtr);
 				localFiles.add(location);
 			} 
 		}
@@ -246,6 +287,8 @@ public class Peer implements FileServer, PeerNode {
 	}
 	
 	public void sendInvalidate(FileLocation location) throws RemoteException {
+		if( pullMode )
+			return;
 		String msgId = localAddress + ":" + localPort + "_" + msgIdSeq++; 
 		seenMessages.put(msgId, this);
 		for ( PeerNode neighbor : neighbors.values() ) {
@@ -289,6 +332,38 @@ public class Peer implements FileServer, PeerNode {
 		registry.unbind(Const.PEER_SERVICE_NAME);
 		UnicastRemoteObject.unexportObject(this, false);
 		UnicastRemoteObject.unexportObject(registry, false);
+	}
+	
+	public synchronized void checkExpired() {
+		for( FileLocation loc : remoteFiles ) {
+			loc.checkExpiration();
+		}
+	}
+	
+	public void sendPolls() {
+		for( FileLocation loc : remoteFiles ) {
+			if (loc.getTtr() < 5 ) {
+				
+				try {
+					//Query the Peer's registry to obtain its FileServer remote object
+					String address = loc.getLocationAddress().getHostString();
+					int port = loc.getLocationAddress().getPort();
+					Registry registry = LocateRegistry.getRegistry(address, port);
+					PeerNode owner = (PeerNode) registry.lookup(Const.PEER_SERVICE_NAME);	
+					
+					//get new ttr
+					int newttr = owner.poll(loc.getName(), loc.getVersion());
+					if ( newttr < 0 ) {
+						loc.invalidate();
+					} else {
+						loc.setTtr(newttr);
+					}					
+				} catch (Exception e ) {
+					System.out.println("Poll failed");
+				}
+
+			}
+		}
 	}
 
 	
@@ -428,7 +503,8 @@ public class Peer implements FileServer, PeerNode {
 									fileLocation = new FileLocation(new InetSocketAddress(localAddress,localPort),
 											fileName,
 											file.length(), 
-											loc.getVersion()
+											loc.getVersion(),
+											getDefaultTtr()
 											);
 								}
 							}
@@ -484,6 +560,10 @@ public class Peer implements FileServer, PeerNode {
 	public void invalidate(String msgId, long ttl, String fileName, FileLocation fileLocation, String host, int port)
 			throws RemoteException {
 		
+		if(pullMode) {
+			return; 
+		}
+		
 		long newttl = ttl - 1;
 		
 		new Thread() { 
@@ -531,5 +611,31 @@ public class Peer implements FileServer, PeerNode {
 					}				
 			}
 		}.start();
+	}
+	
+	@Override
+	public int poll(String fileName, int version) throws RemoteException {
+		
+		//Find file on local file table 
+		FileLocation fileLocation = null;
+		for ( FileLocation loc : localFiles ) {
+			if (loc.getName().equals(fileName) ) {
+				fileLocation = loc;
+			}
+		}
+		
+		//Find FileLocation on remote file table if not found on local
+		if ( fileLocation == null ) {
+			for( FileLocation loc : remoteFiles ) {
+				if (loc.getName().equals(fileName) ) {
+					fileLocation = loc;
+				}
+			}
+		}
+		
+		if( fileLocation.getVersion() > version ) 
+			return -1; 
+		else 
+			return getDefaultTtr();
 	}
 }
