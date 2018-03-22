@@ -536,7 +536,10 @@ public class Peer implements FileServer, PeerNode {
 						}
 
 						try {
-							sender.hitquery(msgId, Const.TTL, fileName, fileLocation);
+							if( fileLocation.isValid() && !fileLocation.isExpired() )
+								sender.hitquery(msgId, Const.TTL, fileName, fileLocation);
+							else 
+								System.out.println("");
 						} catch (RemoteException e) {
 							System.out.println("failed send back reponse");
 						}
