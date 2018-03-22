@@ -85,7 +85,7 @@ public class PeerConsole extends Thread {
 					} 
 					break;
 				case "results":
-					results = peer.getFileLocations();
+					results = peer.getSearchResults();
 					System.out.println("Type \"download <i>\" to download a file from the following list");
 					for( int i = 0; i < results.size(); i++) {
 						System.out.println("" + i + "->"  + results.get(i))
@@ -94,7 +94,7 @@ public class PeerConsole extends Thread {
 				case "download": 
 					try { 
 						int i = s.nextInt();
-						results = peer.getFileLocations();
+						results = peer.getSearchResults();
 						if( i < 0 || i >= results.size() ) { 
 							System.out.println("Invalid index");
 							break;

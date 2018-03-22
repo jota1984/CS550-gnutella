@@ -89,10 +89,10 @@ public class Peer implements PeerNode {
 		return localFiles;
 	}
 
-	private ArrayList<FileLocation> fileLocations;
+	private ArrayList<FileLocation> searchResults;
 	
-	public ArrayList<FileLocation> getFileLocations() {
-		return fileLocations;
+	public ArrayList<FileLocation> getSearchResults() {
+		return searchResults;
 	}
 
 	private static Options options;
@@ -116,7 +116,7 @@ public class Peer implements PeerNode {
 		
 		neighbors = new Hashtable <InetSocketAddress,PeerNode>();
 		seenMessages = new Hashtable <String,PeerNode>();
-		fileLocations = new ArrayList <FileLocation>();
+		searchResults = new ArrayList <FileLocation>();
 		
 		localFiles = new ArrayList<FileLocation>();
 		remoteFiles = new ArrayList<FileLocation>();
@@ -569,7 +569,7 @@ public class Peer implements PeerNode {
 					PeerNode upstream = seenMessages.get(msgId);
 					if(upstream == localPeer) { //If query was initiated by this peer
 						System.out.println("File found, Type \"results\" to view result");
-						fileLocations.add(fileLocation);
+						searchResults.add(fileLocation);
 						return;
 					} else if (newttl > 0){
 						System.out.println("Forwarding hitquery upstream");
