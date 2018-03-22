@@ -367,7 +367,7 @@ public class Peer implements FileServer, PeerNode {
 	
 	public void sendPolls() {
 		for( FileLocation loc : remoteFiles ) {
-			if (loc.getTtr() < 5 ) {
+			if (loc.getTtr() < Const.TTR_TRHESHOLD ) {
 				
 				try {
 					//Query the Peer's registry to obtain its FileServer remote object
