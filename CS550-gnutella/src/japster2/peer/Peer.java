@@ -49,6 +49,7 @@ public class Peer implements PeerNode {
 	private int localPort; 
 	private String fileDirectoryName;
 	private int msgIdSeq; 
+	private long peerId; 
 	
 	private boolean pullMode; 
 	
@@ -126,6 +127,7 @@ public class Peer implements PeerNode {
 		defaultTtr = Const.DEFAULT_TTR;
 		
 		msgIdSeq = 0; 
+		peerId = System.currentTimeMillis();
 	}
 	
 	public static void main(String[] args) {
@@ -279,7 +281,7 @@ public class Peer implements PeerNode {
 	 * @throws RemoteException 
 	 */
 	public void search(String name) throws RemoteException {
-		String msgId = localAddress + ":" + localPort + "_" + msgIdSeq++; 
+		String msgId = localAddress + ":" + localPort + "_" + peerId + "_" + msgIdSeq++; 
 		seenMessages.put(msgId, this);
 		for ( PeerNode neighbor : neighbors.values() ) {
 			neighbor.query(msgId, Const.TTL, name, localAddress, localPort);
@@ -289,7 +291,7 @@ public class Peer implements PeerNode {
 	public void sendInvalidate(FileLocation location) throws RemoteException {
 		if( pullMode )
 			return;
-		String msgId = localAddress + ":" + localPort + "_" + msgIdSeq++; 
+		String msgId = localAddress + ":" + localPort + "_" + peerId + "_" + msgIdSeq++; 
 		seenMessages.put(msgId, this);
 		for ( PeerNode neighbor : neighbors.values() ) {
 			neighbor.invalidate(msgId, Const.TTL, location.getName(), location, localAddress, localPort);
