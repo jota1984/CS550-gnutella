@@ -95,6 +95,11 @@ public class PeerConsole extends Thread {
 					try { 
 						int i = s.nextInt();
 						results = peer.getFileLocations();
+						if( i < 0 || i >= results.size() ) { 
+							System.out.println("Invalid index");
+							break;
+						}
+							
 						FileLocation loc = results.get(i);
 						System.out.println("Attempting to download " + loc);
 						try {
@@ -130,6 +135,12 @@ public class PeerConsole extends Thread {
 					try { 
 						int i = s.nextInt();
 						localFiles = peer.getLocalFiles();
+						
+						if( i < 0 || i >= localFiles.size() ) { 
+							System.out.println("Invalid index");
+							break;
+						}
+						
 						FileLocation file = localFiles.get(i);
 						file.touch();
 						System.out.println("Updated -> " + file );
