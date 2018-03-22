@@ -113,10 +113,6 @@ public class PeerConsole extends Thread {
 						System.out.println("Must specify index");
 					}
 					break;
-				case "export": 
-					peer.exportPeerStub();
-					System.out.println("FileServer object exported");
-					break;
 				case "viewlocal": 
 					localFiles = peer.getLocalFiles();
 					System.out.println("Type \"update <i>\" to update the version of a file from the following list");
