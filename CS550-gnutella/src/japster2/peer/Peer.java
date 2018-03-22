@@ -43,7 +43,7 @@ import org.apache.commons.cli.ParseException;
  * @author jota
  *
  */
-public class Peer implements FileServer, PeerNode {
+public class Peer implements PeerNode {
 	
 	private String localAddress;
 	private int localPort; 
@@ -153,11 +153,11 @@ public class Peer implements FileServer, PeerNode {
 
 
 
-			System.out.println("Exporting FileServer interface");
+			System.out.println("Exporting PeerNode interface");
 			try {
-				peer.exportFileServer();
+				peer.exportPeerStub();
 			} catch (RemoteException e) {
-				System.out.println("Error exporting FileServer interface");
+				System.out.println("Error exporting PeerNode interface");
 				System.exit(0);
 			}
 			
@@ -315,20 +315,20 @@ public class Peer implements FileServer, PeerNode {
 	}
 	
 	private Registry registry;
-	private FileServer serverStub;
+	private PeerNode peerStub;
 	
 	/**
 	 * Creates an RMI registry and binds the FileServer remote object to it.  
 	 * @throws RemoteException
 	 */
-	public void exportFileServer() throws RemoteException {
- 		serverStub = (FileServer) UnicastRemoteObject.exportObject(this,0);
+	public void exportPeerStub() throws RemoteException {
+ 		peerStub = (PeerNode) UnicastRemoteObject.exportObject(this,0);
  		registry = LocateRegistry.getRegistry(localPort);
 		registry = LocateRegistry.createRegistry(localPort);
-        registry.rebind(Const.PEER_SERVICE_NAME, serverStub);
+        registry.rebind(Const.PEER_SERVICE_NAME, peerStub);
 	}
 	
-	public void shutdownFileServer() throws AccessException, RemoteException, NotBoundException {
+	public void shutdownPeerStub() throws AccessException, RemoteException, NotBoundException {
 		registry.unbind(Const.PEER_SERVICE_NAME);
 		UnicastRemoteObject.unexportObject(this, false);
 		UnicastRemoteObject.unexportObject(registry, false);
@@ -413,7 +413,7 @@ public class Peer implements FileServer, PeerNode {
 		
 		//Query the Peer's registry to obtain its FileServer remote object
 		Registry registry = LocateRegistry.getRegistry(address, port);
-		FileServer server = (FileServer) registry.lookup(Const.PEER_SERVICE_NAME);
+		PeerNode server = (PeerNode) registry.lookup(Const.PEER_SERVICE_NAME);
 		
 		//Call the obtain method on the peer to get the TCP port where it will 
 		//server the requested file. 

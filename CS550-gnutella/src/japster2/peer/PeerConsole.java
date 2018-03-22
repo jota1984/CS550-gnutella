@@ -114,7 +114,7 @@ public class PeerConsole extends Thread {
 					}
 					break;
 				case "export": 
-					peer.exportFileServer();
+					peer.exportPeerStub();
 					System.out.println("FileServer object exported");
 					break;
 				case "viewlocal": 
