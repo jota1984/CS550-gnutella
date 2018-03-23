@@ -1,7 +1,8 @@
 package japster2.peer;
 
 /**
- * 
+ * Periodically calls the tickTtr method of a peer, which in turn calls the tickTtr methods of all of its 
+ * remote FileLocations. 
  * @author jota
  *
  */
