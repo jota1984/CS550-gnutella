@@ -78,6 +78,10 @@ public class Peer implements PeerNode {
 	private Registry registry;
 	private PeerNode peerStub;
 	
+	//Propagation delay (used for performance tests) 
+	private boolean simulateDelay = false;
+	private int delayValue; 
+	
 	//Command line options
 	private static Options options;
 	
@@ -144,6 +148,11 @@ public class Peer implements PeerNode {
 
 	public Hashtable<InetSocketAddress,PeerNode> getNeighbors() {
 		return neighbors;
+	}
+	
+	public void setPropagationDelay(int value) {
+		delayValue = value;
+		simulateDelay = true;
 	}
 	
 	public static void main(String[] args) {
@@ -575,6 +584,15 @@ public class Peer implements PeerNode {
 	 */
 	@Override
 	public void query(String msgId, long ttl, String fileName, String host, int port) throws RemoteException {
+		
+		//Delay simulation for performance tests
+		if(simulateDelay) {
+			try {
+				Thread.sleep(delayValue);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
 
 		//decrease TTL 
 		final long newttl = ttl-1;
@@ -664,6 +682,16 @@ public class Peer implements PeerNode {
 	 */
 	@Override
 	public void hitquery(String msgId, long ttl, String fileName, FileLocation fileLocation) throws RemoteException{
+		
+		//Delay simulation for performance tests
+		if(simulateDelay) {
+			try {
+				Thread.sleep(delayValue);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+		
 		//Decrease TTL
 		long newttl = ttl - 1;
 		PeerNode localPeer = this; 
@@ -704,6 +732,15 @@ public class Peer implements PeerNode {
 	@Override
 	public void invalidate(String msgId, long ttl, String fileName, FileLocation fileLocation, String host, int port)
 			throws RemoteException {
+		
+		//Delay simulation for performance tests
+		if(simulateDelay) {
+			try {
+				Thread.sleep(delayValue);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
 		
 		//Ignore messge if running in pull mode
 		if(pullMode) {
@@ -764,6 +801,15 @@ public class Peer implements PeerNode {
 	 */
 	@Override
 	public FileLocation poll(String fileName) throws RemoteException {
+		
+		//Delay simulation for performance tests
+		if(simulateDelay) {
+			try {
+				Thread.sleep(delayValue);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
 		
 		//Find file on local file table 
 		FileLocation fileLocation = null;
