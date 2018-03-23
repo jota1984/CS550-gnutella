@@ -1,5 +1,13 @@
 package japster2.peer;
 
+/**
+ * Thread that periodically calls the sendPolls method of a peer. 
+ * 
+ * Every time the sendPolls method is called all the FileLocations which are about to get expired get polled. (i.e. Their origins are
+ * contacted to see if they are still valid) 
+ * @author jota
+ *
+ */
 public class PollerThread extends Thread {
 	private Peer peer; 
 	
