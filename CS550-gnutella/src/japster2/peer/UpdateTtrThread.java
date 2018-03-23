@@ -19,7 +19,7 @@ public class UpdateTtrThread extends Thread {
 		while(!Thread.interrupted()) {
 			peer.tickTtr();
 			try {
-				sleep(Const.EXPIRATION_WATCH_PERIOD);
+				sleep(Const.UPDATE_TTR_PERIOD);
 			} catch (InterruptedException e) {
 				return; 
 			} 

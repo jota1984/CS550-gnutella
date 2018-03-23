@@ -20,7 +20,7 @@ public class Const {
 	public static final int DEFAULT_TTR = 30; 
 	
 	public static final int POLL_PERIOD = 5000;
-	public static final int EXPIRATION_WATCH_PERIOD = 2000;
+	public static final int UPDATE_TTR_PERIOD = 2000;
 	public static final int TTR_TRHESHOLD = 5; 
 
 }
