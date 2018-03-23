@@ -16,25 +16,36 @@ import japster2.peer.Const;
  */
 public class FileDownloaderThread extends Thread {
 	
+	
+	//file attributes 
 	private String fileName;
 	private float fileSize; 
+	
+	//Socket info 
 	private String address; 
-	private int port; 
+	private int port;
+	
+	//Determine if progress is printed to console
 	private boolean quiet; 
 	
+	//peer object doing the download used for callbacks 
 	private Peer peer; 
 	
+	//FileLocation of the file that will be downloaded
 	private FileLocation location;
 	
+	//IO resources 
 	private FileOutputStream output = null;
 	private Socket socket = null;
 	private InputStream input = null;
 	
 	/**
 	 * Creates a new FileDownloaderThread object
+	 * @param peer peer object doing the download
 	 * @param fileName String representing the full name that will be used to create the file on this peer 
 	 * @param address String representation of the peer that will provide the file
 	 * @param port int representing the port where the remote peer is serving the file
+	 * @param FileLocation location of the file being downloaded
 	 * @param quiet Wont print progress if true
 	 */
 	public FileDownloaderThread(Peer peer, String newFileName, int port, FileLocation location, boolean quiet) { 
@@ -81,10 +92,13 @@ public class FileDownloaderThread extends Thread {
 	 * @param downloaded
 	 */
 	public void printProgress(long downloaded) { 
+		//compute progress in 5% increments
 		long currentProgress = 5*Math.round( (downloaded * 100) / (fileSize*5) ) ;
+		//check if currentProgress is greater than last printed value
 		if (!quiet && currentProgress > progress) {
 			progress = currentProgress;
 			String name = new File(fileName).getName();
+			//print progress
 			System.out.println("Downloading " + name + ": " + progress + "% downloaded");
 		}
 	}
@@ -92,13 +106,14 @@ public class FileDownloaderThread extends Thread {
 	@Override
 	public void run() {
 		try {
+
+			//Get IO resources
 			output = new FileOutputStream(new File(fileName));
 			socket = new Socket(address,port);
-
 			input = socket.getInputStream();
-
 			byte buffer[] = new byte[Const.BUFFER_SIZE];
 
+			//Read file from socket while updating progress variable
 			int len = input.read(buffer);
 			long downloaded = 0; 
 			progress = -1;
@@ -107,13 +122,15 @@ public class FileDownloaderThread extends Thread {
 				output.write(buffer,0,len);
 				downloaded += len;
 				printProgress(downloaded);
-				//System.out.println("" + downloaded + "bytes downloaded");
 				len = input.read(buffer);
 			}
 		
 			output.flush();
+			
 			if( !quiet)
 				System.out.println("Download success (" + fileName + ")");
+			
+			//Record FileLocation on remote FileLocations table 
 			peer.addRemoteFile(location);
 		} catch (IOException e) {
 			System.out.println("Download failed (" + fileName + ")");
