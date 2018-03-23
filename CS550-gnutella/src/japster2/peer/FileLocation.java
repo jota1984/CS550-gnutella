@@ -24,6 +24,8 @@ public class FileLocation implements Serializable{
 	private int ttr;
 	private boolean expired;
 	
+	private long timeStamp; 
+	
 	public int getTtr() {
 		return ttr;
 	}
@@ -65,6 +67,8 @@ public class FileLocation implements Serializable{
 		this.ttr = ttr;
 		expired = false; 
 		valid = true; 
+		
+		updateTimeStamp();
 	}
 	
 	public String getName() {
@@ -77,6 +81,7 @@ public class FileLocation implements Serializable{
 	
 	public void touch() {
 		version++;
+		updateTimeStamp();
 	}
 	
 	public void invalidate() { 
@@ -93,6 +98,14 @@ public class FileLocation implements Serializable{
 	
 	public InetSocketAddress getLocationAddress() {
 		return locationAddress;
+	}
+	
+	public long getTimeStamp() { 
+		return timeStamp;
+	}
+	
+	public void updateTimeStamp() {
+		timeStamp = System.currentTimeMillis();
 	}
 
 	@Override
