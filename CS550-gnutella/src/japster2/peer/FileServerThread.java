@@ -19,12 +19,21 @@ import japster2.peer.Const;
  */
 public class FileServerThread extends Thread {
 
+	//Sockets and streams 
 	private ServerSocket serverSocket;
 	private FileInputStream input;
 	private Socket clientSocket;
 	private OutputStream output;
+	
+	//Filename to be served
 	private String fileName;
 	
+	
+	/**
+	 * Creates a Thread that will server the specified file
+	 * @param fileName
+	 * @throws IOException
+	 */
 	public FileServerThread( String fileName) throws IOException {
 		
 		this.fileName = fileName;
@@ -32,7 +41,7 @@ public class FileServerThread extends Thread {
 		if (!new File(fileName).exists())
 			throw new FileNotFoundException();
 		
-		
+		//Create socket on random port
 		serverSocket = new ServerSocket(0);
 		serverSocket.setSoTimeout(Const.FILE_SERVER_WAIT_TIME);
 
@@ -87,19 +96,21 @@ public class FileServerThread extends Thread {
 	public void run() {
 		try {
 
+			//wait for client connections
 			clientSocket = serverSocket.accept();
 			
+			//get streams 
 			output = clientSocket.getOutputStream();
 			input = new FileInputStream(new File (fileName));
 
 			byte buffer[] = new byte[Const.BUFFER_SIZE];
 
+			//read file and send through socket
 			int len = input.read(buffer);
 			while(len>0) {
 				output.write(buffer,0,len);
 				len = input.read(buffer);
 			}
-			System.out.println("File Transfer success (" + fileName + ")");
 		} catch (SocketTimeoutException e) {
 			System.out.println("File Transfer timed out waiting for client connection (" + fileName + ")");				
 
