@@ -37,7 +37,7 @@ public class FileLocation implements Serializable{
 		expired = false;
 	}
 
-	public void checkExpiration() {
+	public void tickTtr() {
 		if( expired )
 			return;
 		ttr -= Const.EXPIRATION_WATCH_PERIOD/1000;

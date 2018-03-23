@@ -183,7 +183,7 @@ public class Peer implements PeerNode {
 				if( cmd.hasOption("t")) {
 					peer.setDefaultTtr(Integer.parseInt(cmd.getOptionValue("t")));
 				}
-				new ExpirationWatcherThread(peer).start();
+				new UpdateTtrThread(peer).start();
 				new PollerThread(peer).start();
 				
 			}
@@ -336,9 +336,9 @@ public class Peer implements PeerNode {
 		UnicastRemoteObject.unexportObject(registry, false);
 	}
 	
-	public synchronized void checkExpired() {
+	public synchronized void tickTtr() {
 		for( FileLocation loc : remoteFiles ) {
-			loc.checkExpiration();
+			loc.tickTtr();
 		}
 	}
 	
