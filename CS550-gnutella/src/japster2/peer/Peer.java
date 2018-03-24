@@ -85,8 +85,7 @@ public class Peer implements PeerNode {
 	//Quiet flag used for performance test
 	private boolean quiet = false; 
 	
-	//pull mode threads 
-	private PollerThread pollerThr;
+	//pull mode thread for updating TTR and polling when required 
 	private UpdateTtrThread updateTtrThr; 
 	
 	//Command line options
@@ -243,26 +242,20 @@ public class Peer implements PeerNode {
 	
 	
 	/**
-	 * Start poller and TTR refresh threads
+	 * Start TTR refresh thread
 	 */
 	public void initPullMode() {
 		updateTtrThr = new UpdateTtrThread(this);
-		pollerThr = new PollerThread(this);
-		
 		updateTtrThr.start();
-		pollerThr.start();
 	}
 	
 	/**
-	 * Stop poller and TTR refresh threads
+	 * Stop TTR refresh thread
 	 */
 	public void endPullMode() {
 		//stop TTR refresh thread
 		if (updateTtrThr != null) 
 			updateTtrThr.interrupt();
-		//stop poller 
-		if (pollerThr != null)
-			pollerThr.interrupt();
 	}
 	
 	/**
@@ -495,7 +488,7 @@ public class Peer implements PeerNode {
 	}
 	
 	/**
-	 * Go through list of remote FileLocations and poll the owners of each file that is about to expire
+	 * Go through list of remote FileLocations and poll the owners of each file that is expired
 	 */
 	public void sendPolls() {
 		
@@ -503,7 +496,7 @@ public class Peer implements PeerNode {
 		for( FileLocation loc : remoteFiles ) {
 			
 			//Check if they are about to expire
-			if (loc.getTtr() < Const.TTR_TRHESHOLD ) {
+			if (loc.isExpired() ) {
 				
 				try {
 					//obtain a PeerNode stub for file's owner 
