@@ -85,6 +85,10 @@ public class Peer implements PeerNode {
 	//Quiet flag used for performance test
 	private boolean quiet = false; 
 	
+	//pull mode threads 
+	private PollerThread pollerThr;
+	private UpdateTtrThread updateTtrThr; 
+	
 	//Command line options
 	private static Options options;
 	
@@ -221,11 +225,8 @@ public class Peer implements PeerNode {
 					peer.setDefaultTtr(Integer.parseInt(cmd.getOptionValue("t")));
 				}
 				
-				//Run update TTR thread
-				new UpdateTtrThread(peer).start();
-				
-				//Run poller thread 
-				new PollerThread(peer).start();
+				//Start pull mode threads
+				peer.initPullMode();
 			}
 			
 			//Load files from local dir
@@ -238,6 +239,30 @@ public class Peer implements PeerNode {
 			System.out.println("Error parsing arguments" + e.getMessage());
 			
 		} 
+	}
+	
+	
+	/**
+	 * Start poller and TTR refresh threads
+	 */
+	public void initPullMode() {
+		updateTtrThr = new UpdateTtrThread(this);
+		pollerThr = new PollerThread(this);
+		
+		updateTtrThr.start();
+		pollerThr.start();
+	}
+	
+	/**
+	 * Stop poller and TTR refresh threads
+	 */
+	public void endPullMode() {
+		//stop TTR refresh thread
+		if (updateTtrThr != null) 
+			updateTtrThr.interrupt();
+		//stop poller 
+		if (pollerThr != null)
+			pollerThr.interrupt();
 	}
 	
 	/**
