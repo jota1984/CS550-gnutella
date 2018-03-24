@@ -82,6 +82,9 @@ public class Peer implements PeerNode {
 	private boolean simulateDelay = false;
 	private int delayValue; 
 	
+	//Quiet flag used for performance test
+	private boolean quiet = false; 
+	
 	//Command line options
 	private static Options options;
 	
@@ -153,6 +156,10 @@ public class Peer implements PeerNode {
 	public void setPropagationDelay(int value) {
 		delayValue = value;
 		simulateDelay = true;
+	}
+	
+	public void setQuiet(boolean value ) {
+		quiet = value;
 	}
 	
 	public static void main(String[] args) {
@@ -454,7 +461,7 @@ public class Peer implements PeerNode {
 					FileLocation newFileLocation = owner.poll(loc.getName());
 					
 					//download the file using the new FileLocation 
-					download( newFileLocation, false );
+					download( newFileLocation, quiet );
 				} catch (NotBoundException | IOException e) {
 					System.out.println("Failed to download new copy for " + loc.getName() );
 				} 
@@ -711,7 +718,9 @@ public class Peer implements PeerNode {
 				//Check if query was initiated by us
 				if(upstream == localPeer) { 
 					//Notify file was found and add result to result list
-					System.out.println("File found, Type \"results\" to view result");
+					if ( !quiet) {
+						System.out.println("File found, Type \"results\" to view result");						
+					}
 					searchResults.add(fileLocation);
 					return;
 				//if message is not for us and the TTL hasnt expired propagate to origin  
@@ -787,8 +796,10 @@ public class Peer implements PeerNode {
 				//Find out if we have downloaded that file and mark as invalid if found
 				for( FileLocation loc : remoteFiles ) {
 					if (loc.getName().equals(fileName) ) {
-						System.out.println("Received invalidate message for " +
-								fileName + "; New version is " + fileLocation.getVersion() );
+						if( !quiet ) {
+							System.out.println("Received invalidate message for " +
+									fileName + "; New version is " + fileLocation.getVersion() );							
+						}
 						loc.invalidate();
 					}
 				}
