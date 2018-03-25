@@ -13,7 +13,15 @@
         <pathelement location="bin"/>
         <pathelement location="lib/commons-cli-1.4.jar"/>
     </path>
-    <path id="run.Peer.classpath">
+    <path id="run.InvalidQueryTest.classpath">
+        <path refid="CS550-gnutella.classpath"/>
+        <pathelement location="lib/commons-cli-1.4.jar"/>
+    </path>
+    <path id="run.Peer_0.classpath">
+        <path refid="CS550-gnutella.classpath"/>
+        <pathelement location="lib/commons-cli-1.4.jar"/>
+    </path>
+    <path id="run.Peer_1.classpath">
         <path refid="CS550-gnutella.classpath"/>
         <pathelement location="lib/commons-cli-1.4.jar"/>
     </path>
@@ -25,11 +33,34 @@
         <path refid="CS550-gnutella.classpath"/>
         <pathelement location="lib/commons-cli-1.4.jar"/>
     </path>
+    <path id="run.InvalidQueryTest_push_10.classpath">
+        <path refid="CS550-gnutella.classpath"/>
+        <pathelement location="lib/commons-cli-1.4.jar"/>
+    </path>
+    <path id="run.InvalidQueryTest_push_5.classpath">
+        <path refid="CS550-gnutella.classpath"/>
+        <pathelement location="lib/commons-cli-1.4.jar"/>
+    </path>
+    <path id="run.InvalidQueryTest_push_3.classpath">
+        <path refid="CS550-gnutella.classpath"/>
+        <pathelement location="lib/commons-cli-1.4.jar"/>
+    </path>
+    <path id="run.InvalidQueryTest_pull_10_ttr_8.classpath">
+        <path refid="CS550-gnutella.classpath"/>
+        <pathelement location="lib/commons-cli-1.4.jar"/>
+    </path>
+    <path id="run.InvalidQueryTest_pull_10_ttr_4.classpath">
+        <path refid="CS550-gnutella.classpath"/>
+        <pathelement location="lib/commons-cli-1.4.jar"/>
+    </path>
+    <path id="run.InvalidQueryTest_pull_10_ttr_2.classpath">
+        <path refid="CS550-gnutella.classpath"/>
+        <pathelement location="lib/commons-cli-1.4.jar"/>
+    </path>
     <target name="init">
         <mkdir dir="bin"/>
         <copy includeemptydirs="false" todir="bin">
             <fileset dir="src">
-                <exclude name="**/*.launch"/>
                 <exclude name="**/*.java"/>
             </fileset>
         </copy>
@@ -61,22 +92,69 @@
         <property name="build.compiler" value="org.eclipse.jdt.core.JDTCompilerAdapter"/>
         <antcall target="build"/>
     </target>
-    <target name="Peer">
+    <target name="InvalidQueryTest">
+        <java classname="japster2.tools.InvalidQueryTest" failonerror="true" fork="yes">
+            <classpath refid="run.InvalidQueryTest.classpath"/>
+        </java>
+    </target>
+    <target name="Peer_0">
         <java classname="japster2.peer.Peer" failonerror="true" fork="yes">
-            <arg line="-D ${env_var:HOME}/tmp -L 127.0.0.1 -P 9997"/>
-            <classpath refid="run.Peer.classpath"/>
+            <arg line="-D ${env.HOME}/tmp6 -L 127.0.0.1 -P 9990 -N 127.0.0.1:9999"/>
+            <classpath refid="run.Peer_0.classpath"/>
+        </java>
+    </target>
+    <target name="Peer_1">
+        <java classname="japster2.peer.Peer" failonerror="true" fork="yes">
+            <arg line="-D ${env.HOME}/tmp -L 127.0.0.1 -P 9991 -N 127.0.0.1:9990"/>
+            <classpath refid="run.Peer_1.classpath"/>
         </java>
     </target>
     <target name="Peer_2">
         <java classname="japster2.peer.Peer" failonerror="true" fork="yes">
-            <arg line="-D ${env_var:HOME}/tmp2 -L 127.0.0.1 -P 9996 -N 127.0.0.1:9995,127.0.0.1:9997"/>
+            <arg line="-D ${env.HOME}/tmp2 -L 127.0.0.1 -P 9992 -N 127.0.0.1:9991"/>
             <classpath refid="run.Peer_2.classpath"/>
         </java>
     </target>
     <target name="Peer_3">
         <java classname="japster2.peer.Peer" failonerror="true" fork="yes">
-            <arg line="-D ${env_var:HOME}/tmp3 -L 127.0.0.1 -P 9995"/>
+            <arg line="-D ${env.HOME}/tmp3 -L 127.0.0.1 -P 9993 -N 127.0.0.1:9992 -p"/>
             <classpath refid="run.Peer_3.classpath"/>
+        </java>
+    </target>
+    <target name="InvalidQueryTest_push_10">
+        <java classname="japster2.tools.InvalidQueryTest" failonerror="true" fork="yes">
+            <arg line="-s 10"/>
+            <classpath refid="run.InvalidQueryTest_push_10.classpath"/>
+        </java>
+    </target>
+    <target name="InvalidQueryTest_push_5">
+        <java classname="japster2.tools.InvalidQueryTest" failonerror="true" fork="yes">
+            <arg line="-s 5"/>
+            <classpath refid="run.InvalidQueryTest_push_5.classpath"/>
+        </java>
+    </target>
+    <target name="InvalidQueryTest_push_3">
+        <java classname="japster2.tools.InvalidQueryTest" failonerror="true" fork="yes">
+            <arg line="-s 3"/>
+            <classpath refid="run.InvalidQueryTest_push_3.classpath"/>
+        </java>
+    </target>
+    <target name="InvalidQueryTest_pull_10_ttr_8">
+        <java classname="japster2.tools.InvalidQueryTest" failonerror="true" fork="yes">
+            <arg line="-s 10 -p -t 8"/>
+            <classpath refid="run.InvalidQueryTest_pull_10_ttr_8.classpath"/>
+        </java>
+    </target>
+    <target name="InvalidQueryTest_pull_10_ttr_4">
+        <java classname="japster2.tools.InvalidQueryTest" failonerror="true" fork="yes">
+            <arg line="-s 10 -p -t 4"/>
+            <classpath refid="run.InvalidQueryTest_pull_10_ttr_4.classpath"/>
+        </java>
+    </target>
+    <target name="InvalidQueryTest_pull_10_ttr_2">
+        <java classname="japster2.tools.InvalidQueryTest" failonerror="true" fork="yes">
+            <arg line="-s 10 -p -t 2"/>
+            <classpath refid="run.InvalidQueryTest_pull_10_ttr_2.classpath"/>
         </java>
     </target>
 </project>
