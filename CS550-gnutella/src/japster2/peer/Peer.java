@@ -127,8 +127,10 @@ public class Peer implements PeerNode {
 		return remoteFiles;
 	}
 	
-	public synchronized void addRemoteFile(FileLocation loc) {
-		remoteFiles.add(loc);
+	public void addRemoteFile(FileLocation loc) {
+		synchronized(remoteFiles) { 
+			remoteFiles.add(loc);
+		}
 	}
 	
 	public ArrayList<FileLocation> getLocalFiles() {
@@ -442,9 +444,11 @@ public class Peer implements PeerNode {
 	/**
 	 * Reduce the TTR counter of each of the files that have been downloaded from other peers
 	 */
-	public synchronized void tickTtr() {
-		for( FileLocation loc : remoteFiles ) {
-			loc.tickTtr();
+	public void tickTtr() {
+		synchronized(remoteFiles) {
+			for( FileLocation loc : remoteFiles ) {
+				loc.tickTtr();
+			}
 		}
 	}
 	
@@ -455,34 +459,36 @@ public class Peer implements PeerNode {
 	public void refreshFiles()  {
 		
 		//Go through list of remote files
-		for( int i = remoteFiles.size() -1; i >= 0; i--) {//Traverse list backwards to ensure safe deletion during traversal
-			FileLocation loc = remoteFiles.get(i); 
-			
-			//Find files that have been marked as invalid
-			if (!loc.isValid()) {
-				
-				//delete the current copy of the file
-				String fileName = fileDirectoryName + File.separator + loc.getName();
-				new File(fileName).delete();
-				
-				//Remove the FileLocation from the list of remote files 
-				remoteFiles.remove(i);
-				
-				try {
-					//obtain a PeerNode stub of the owner of the file 
-					String address = loc.getLocationAddress().getHostString();
-					int port = loc.getLocationAddress().getPort();
-					Registry registry = LocateRegistry.getRegistry(address, port);
-					PeerNode owner = (PeerNode) registry.lookup(Const.PEER_SERVICE_NAME);	
-					
-					//get new FileLocation with updated version and TTR from the owner 
-					FileLocation newFileLocation = owner.poll(loc.getName());
-					
-					//download the file using the new FileLocation 
-					download( newFileLocation, quiet );
-				} catch (NotBoundException | IOException e) {
-					System.out.println("Failed to download new copy for " + loc.getName() );
-				} 
+		synchronized(remoteFiles) {
+			for( int i = remoteFiles.size() -1; i >= 0; i--) {//Traverse list backwards to ensure safe deletion during traversal
+				FileLocation loc = remoteFiles.get(i); 
+
+				//Find files that have been marked as invalid
+				if (!loc.isValid()) {
+
+					//delete the current copy of the file
+					String fileName = fileDirectoryName + File.separator + loc.getName();
+					new File(fileName).delete();
+
+					//Remove the FileLocation from the list of remote files 
+					remoteFiles.remove(i);
+
+					try {
+						//obtain a PeerNode stub of the owner of the file 
+						String address = loc.getLocationAddress().getHostString();
+						int port = loc.getLocationAddress().getPort();
+						Registry registry = LocateRegistry.getRegistry(address, port);
+						PeerNode owner = (PeerNode) registry.lookup(Const.PEER_SERVICE_NAME);	
+
+						//get new FileLocation with updated version and TTR from the owner 
+						FileLocation newFileLocation = owner.poll(loc.getName());
+
+						//download the file using the new FileLocation 
+						download( newFileLocation, quiet );
+					} catch (NotBoundException | IOException e) {
+						System.out.println("Failed to download new copy for " + loc.getName() );
+					} 
+				}
 			}
 		}
 	}
@@ -493,31 +499,33 @@ public class Peer implements PeerNode {
 	public void sendPolls() {
 		
 		//Go through FileLocations of downloaded files 
-		for( FileLocation loc : remoteFiles ) {
-			
-			//Check if they are about to expire
-			if (loc.isExpired() ) {
-				
-				try {
-					//obtain a PeerNode stub for file's owner 
-					String address = loc.getLocationAddress().getHostString();
-					int port = loc.getLocationAddress().getPort();
-					Registry registry = LocateRegistry.getRegistry(address, port);
-					PeerNode owner = (PeerNode) registry.lookup(Const.PEER_SERVICE_NAME);	
-					
-					//get new FileLocation from the owner 
-					FileLocation newFileLocation = owner.poll(loc.getName());
-					
-					//compare our version with the version of the received FileLocation from the owner
-					if ( newFileLocation == null || newFileLocation.getVersion() > loc.getVersion() ) {
-						loc.invalidate();//invalidate our FileLocation if the owner has a new version
-					} else {
-						loc.setTtr(newFileLocation.getTtr());//refresh the file's TTR if our copy is up to date
-					}					
-				} catch (Exception e ) {
-					System.out.println("Poll failed");
-				}
+		synchronized(remoteFiles) {
+			for( FileLocation loc : remoteFiles ) {
 
+				//Check if they are about to expire
+				if (loc.isExpired() ) {
+
+					try {
+						//obtain a PeerNode stub for file's owner 
+						String address = loc.getLocationAddress().getHostString();
+						int port = loc.getLocationAddress().getPort();
+						Registry registry = LocateRegistry.getRegistry(address, port);
+						PeerNode owner = (PeerNode) registry.lookup(Const.PEER_SERVICE_NAME);	
+
+						//get new FileLocation from the owner 
+						FileLocation newFileLocation = owner.poll(loc.getName());
+
+						//compare our version with the version of the received FileLocation from the owner
+						if ( newFileLocation == null || newFileLocation.getVersion() > loc.getVersion() ) {
+							loc.invalidate();//invalidate our FileLocation if the owner has a new version
+						} else {
+							loc.setTtr(newFileLocation.getTtr());//refresh the file's TTR if our copy is up to date
+						}					
+					} catch (Exception e ) {
+						System.out.println("Poll failed");
+					}
+
+				}
 			}
 		}
 	}
@@ -670,26 +678,32 @@ public class Peer implements PeerNode {
 
 					//Find FileLocation on remote file table if not found on local table
 					if ( fileLocation == null ) {
-						for( FileLocation loc : remoteFiles ) {
-							if (loc.getName().equals(fileName) ) {
-								//check if this location is invalid or expired 
-								if (loc.isValid() && !loc.isExpired() ) {
-									//Create new file location (We cannot use location stored on the remote table since that 
-									//one points to the original copy, we want to answer the query with a FileLocation that 
-									//points to us)
-									fileLocation = new FileLocation(new InetSocketAddress(localAddress,localPort),
-											fileName,
-											file.length(), 
-											loc.getVersion(),
-											getDefaultTtr()
-											);								
-								} else { //if file invalid or expired do nothing
-									return;
+						synchronized(remoteFiles) {
+							for( FileLocation loc : remoteFiles ) {
+								if (loc.getName().equals(fileName) ) {
+									//check if this location is invalid or expired 
+									if (loc.isValid() && !loc.isExpired() ) {
+										//Create new file location (We cannot use location stored on the remote table since that 
+										//one points to the original copy, we want to answer the query with a FileLocation that 
+										//points to us)
+										fileLocation = new FileLocation(new InetSocketAddress(localAddress,localPort),
+												fileName,
+												file.length(), 
+												loc.getVersion(),
+												getDefaultTtr()
+												);								
+									} else { //if file invalid or expired do nothing
+										return;
+									}
+
 								}
-	
 							}
 						}
 					}
+					
+					//if file wasnt found on remote or local table files
+					if (fileLocation == null)
+						return;
 
 					try {
 						//send hitquery with result
@@ -812,13 +826,15 @@ public class Peer implements PeerNode {
 				//Now process the invalidate message
 
 				//Find out if we have downloaded that file and mark as invalid if found
-				for( FileLocation loc : remoteFiles ) {
-					if (loc.getName().equals(fileName) ) {
-						if( !quiet ) {
-							System.out.println("Received invalidate message for " +
-									fileName + "; New version is " + fileLocation.getVersion() );							
+				synchronized(remoteFiles) {
+					for( FileLocation loc : remoteFiles ) {
+						if (loc.getName().equals(fileName) ) {
+							if( !quiet ) {
+								System.out.println("Received invalidate message for " +
+										fileName + "; New version is " + fileLocation.getVersion() );							
+							}
+							loc.invalidate();
 						}
-						loc.invalidate();
 					}
 				}
 			}
@@ -850,14 +866,16 @@ public class Peer implements PeerNode {
 		
 		//Find FileLocation on remote file table if not found on local
 		if ( fileLocation == null ) {
-			for( FileLocation loc : remoteFiles ) {
-				if (loc.getName().equals(fileName) ) {
-					fileLocation = new FileLocation(new InetSocketAddress(localAddress,localPort),
-							fileName,
-							loc.getSize(), 
-							loc.getVersion(),
-							getDefaultTtr()
-							);
+			synchronized (remoteFiles) {
+				for( FileLocation loc : remoteFiles ) {
+					if (loc.getName().equals(fileName) ) {
+						fileLocation = new FileLocation(new InetSocketAddress(localAddress,localPort),
+								fileName,
+								loc.getSize(), 
+								loc.getVersion(),
+								getDefaultTtr()
+								);
+					}
 				}
 			}
 		}
